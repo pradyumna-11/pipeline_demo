@@ -2,10 +2,46 @@ pipeline {
     agent any
 
     stages {
-        stage('Hello') {
+        stage('Build') {
             steps {
-                echo 'Hello World, abcd'
+                script {
+                    echo "Starting the build process..."
+                    // Add your build steps here
+                    echo "Build process completed successfully."
+                }
             }
+        }
+
+        stage('Test') {
+            steps {
+                script {
+                    echo "Running unit tests..."
+                    // Add your testing commands here
+                    echo "Unit tests completed."
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    echo "Deploying application to the environment..."
+                    // Add your deployment steps here
+                    echo "Application deployed successfully."
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline completed."
+        }
+        success {
+            echo "Pipeline finished successfully!"
+        }
+        failure {
+            echo "Pipeline failed. Please check the logs for more details."
         }
     }
 }
