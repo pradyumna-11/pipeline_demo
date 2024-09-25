@@ -1,11 +1,88 @@
 pipeline {
     agent any
 
+    tools {
+        // Define SonarQube scanner (make sure it's configured in Jenkins Global Tool Configuration)
+        sonarQube 'SonarQube Scanner'
+    }
+
     stages {
-        stage('Hello') {
+        stage('Build') {
             steps {
-                echo 'Hello World'
+                script {
+                    echo "Starting the build process..."
+                    // Add your build steps here (e.g., Maven/Gradle)
+                    sh 'mvn clean install'
+                    echo "Build process completed successfully."
+                }
             }
+        }
+
+        stage('Test') {
+            steps {
+                script {
+                    echo "Running unit tests..."
+                    // Add your testing commands here
+                    sh 'mvn test'
+                    echo "Unit tests completed."
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            environment {
+                // SonarQube token (use credentials from Jenkins credentials manager)
+                SONAR_TOKEN = credentials('sonar-token')
+            }
+            steps {
+                script {
+                    echo "Running SonarQube static analysis..."
+                    withSonarQubeEnv('SonarQube') {
+                        sh '''
+                            mvn sonar:sonar \
+                                -Dsonar.projectKey=your-project-key \
+                                -Dsonar.host.url=http://localhost:9000 \
+                                -Dsonar.login=$SONAR_TOKEN
+                        '''
+                    }
+                    echo "SonarQube analysis completed."
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                script {
+                    echo "Checking SonarQube Quality Gate status..."
+                    def qg = waitForQualityGate()
+                    if (qg.status != 'OK') {
+                        error "Pipeline failed due to quality gate failure: ${qg.status}"
+                    }
+                    echo "SonarQube Quality Gate passed."
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    echo "Deploying application to the environment..."
+                    // Add your deployment steps here
+                    echo "Application deployed successfully."
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline completed."
+        }
+        success {
+            echo "Pipeline finished successfully!"
+        }
+        failure {
+            echo "Pipeline failed. Please check the logs for more details."
         }
     }
 }
